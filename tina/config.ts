@@ -12,6 +12,11 @@ export default defineConfig({
     publicFolder: "public",
   },
 
+  previewUrl: (context) => {
+    const base = process.env.TINA_PUBLIC_PREVIEW_URL || "http://localhost:4321";
+    return { url: `${base}/` };
+  },
+
   media: {
     tina: {
       mediaRoot: "uploads",
