@@ -1,0 +1,6 @@
+fragment HomepageParts on Homepage {
+  __typename
+  heroText
+  image
+  body
+}

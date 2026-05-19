@@ -1,0 +1,41 @@
+---
+import matter from "gray-matter";
+
+const raw = await import("../../content/homepage/index.mdx?raw").then(m => m.default);
+const { data, content } = matter(raw);
+
+const heroText: string = data.heroText ?? "Welcome";
+const image: string | null = data.image || null;
+
+// Convert markdown to HTML (bold, italic, links, line breaks)
+const bodyHtml = content.trim()
+  .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+  .replace(/\*(.+?)\*/g, "<em>$1</em>")
+  .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>')
+  .split(/\n\n+/)
+  .map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`)
+  .join("\n");
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{heroText}</title>
+    <style>
+      body { font-family: sans-serif; max-width: 720px; margin: 60px auto; padding: 0 24px; color: #1a1a1a; }
+      h1   { font-size: 2.5rem; margin-bottom: 1rem; }
+      img  { max-width: 100%; border-radius: 8px; margin-bottom: 1.5rem; }
+      p    { line-height: 1.7; font-size: 1.1rem; }
+      .edit-hint { margin-top: 3rem; font-size: 0.85rem; color: #888; }
+      .edit-hint a { color: #888; }
+    </style>
+  </head>
+  <body>
+    <h1>{heroText}</h1>
+    {image && <img src={image} alt="" />}
+    <div set:html={bodyHtml} />
+    <p class="edit-hint">Edit this content in the <a href="/admin">TinaCMS editor →</a></p>
+  </body>
+</html>
