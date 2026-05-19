@@ -1,5 +1,5 @@
 ---
-import { client } from "../../tina/__generated__/client";
+import { client } from "../lib/tina";
 
 const tinaProps = await client.queries.homepage({ relativePath: "index.mdx" });
 const { heroText, image, body } = tinaProps.data.homepage;
