@@ -1,40 +1,8 @@
 ---
 import { client } from "../lib/tina";
+import HomePage from "../components/HomePage";
 
 const tinaProps = await client.queries.homepage({ relativePath: "index.mdx" });
-const { heroText, image, body } = tinaProps.data.homepage;
-
-// Serialize form payload for the bridge
-const formPayload = JSON.stringify({
-  id: tinaProps.query + JSON.stringify(tinaProps.variables),
-  query: tinaProps.query,
-  variables: tinaProps.variables,
-  data: tinaProps.data,
-});
-
-// Convert rich-text body to plain HTML (body is TinaCMS AST)
-function renderBody(node: any): string {
-  if (!node) return "";
-  if (node.type === "text") return node.text ?? "";
-  if (node.type === "mdxJsxTextElement" || node.type === "mdxJsxFlowElement") return "";
-  const children = (node.children ?? []).map(renderBody).join("");
-  switch (node.type) {
-    case "root": return children;
-    case "p": return `<p>${children}</p>`;
-    case "h1": return `<h1>${children}</h1>`;
-    case "h2": return `<h2>${children}</h2>`;
-    case "h3": return `<h3>${children}</h3>`;
-    case "ul": return `<ul>${children}</ul>`;
-    case "ol": return `<ol>${children}</ol>`;
-    case "li": return `<li>${children}</li>`;
-    case "bold": return `<strong>${children}</strong>`;
-    case "italic": return `<em>${children}</em>`;
-    case "a": return `<a href="${node.url ?? ""}">${children}</a>`;
-    default: return children;
-  }
-}
-
-const bodyHtml = renderBody(body);
 ---
 
 <html lang="en">
@@ -42,26 +10,20 @@ const bodyHtml = renderBody(body);
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{heroText}</title>
+    <title>{tinaProps.data.homepage.heroText}</title>
     <style>
       body { font-family: sans-serif; max-width: 720px; margin: 60px auto; padding: 0 24px; color: #1a1a1a; }
-      h1   { font-size: 2.5rem; margin-bottom: 1rem; }
-      img  { max-width: 100%; border-radius: 8px; margin-bottom: 1.5rem; }
-      p    { line-height: 1.7; font-size: 1.1rem; }
       .edit-hint { margin-top: 3rem; font-size: 0.85rem; color: #888; }
       .edit-hint a { color: #888; }
     </style>
   </head>
   <body>
-    <div data-tina-form={formPayload}>
-      <h1 data-tina-field="heroText">{heroText}</h1>
-      {image && <img data-tina-field="image" src={image} alt="" />}
-      <div data-tina-field="body" set:html={bodyHtml} />
-    </div>
+    <HomePage
+      query={tinaProps.query}
+      variables={tinaProps.variables}
+      data={tinaProps.data}
+      client:only="react"
+    />
     <p class="edit-hint">Edit this content in the <a href="/admin">TinaCMS editor →</a></p>
-    <script>
-      import { init } from "@tinacms/bridge";
-      init();
-    </script>
   </body>
 </html>
