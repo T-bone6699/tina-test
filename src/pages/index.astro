@@ -24,6 +24,8 @@ const tinaProps = await client.queries.homepage({ relativePath: "index.mdx" });
       data={tinaProps.data}
       client:only="react"
     />
-    <p class="edit-hint">Edit this content in the <a href="/admin">TinaCMS editor →</a></p>
+    <p class="edit-hint">
+      <a href="/admin/#/~">Open visual editor →</a>
+    </p>
   </body>
 </html>
