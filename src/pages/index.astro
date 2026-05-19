@@ -1,20 +1,40 @@
 ---
-import matter from "gray-matter";
+import { client } from "../../tina/__generated__/client";
 
-const raw = await import("../../content/homepage/index.mdx?raw").then(m => m.default);
-const { data, content } = matter(raw);
+const tinaProps = await client.queries.homepage({ relativePath: "index.mdx" });
+const { heroText, image, body } = tinaProps.data.homepage;
 
-const heroText: string = data.heroText ?? "Welcome";
-const image: string | null = data.image || null;
+// Serialize form payload for the bridge
+const formPayload = JSON.stringify({
+  id: tinaProps.query + JSON.stringify(tinaProps.variables),
+  query: tinaProps.query,
+  variables: tinaProps.variables,
+  data: tinaProps.data,
+});
 
-// Convert markdown to HTML (bold, italic, links, line breaks)
-const bodyHtml = content.trim()
-  .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-  .replace(/\*(.+?)\*/g, "<em>$1</em>")
-  .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>')
-  .split(/\n\n+/)
-  .map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`)
-  .join("\n");
+// Convert rich-text body to plain HTML (body is TinaCMS AST)
+function renderBody(node: any): string {
+  if (!node) return "";
+  if (node.type === "text") return node.text ?? "";
+  if (node.type === "mdxJsxTextElement" || node.type === "mdxJsxFlowElement") return "";
+  const children = (node.children ?? []).map(renderBody).join("");
+  switch (node.type) {
+    case "root": return children;
+    case "p": return `<p>${children}</p>`;
+    case "h1": return `<h1>${children}</h1>`;
+    case "h2": return `<h2>${children}</h2>`;
+    case "h3": return `<h3>${children}</h3>`;
+    case "ul": return `<ul>${children}</ul>`;
+    case "ol": return `<ol>${children}</ol>`;
+    case "li": return `<li>${children}</li>`;
+    case "bold": return `<strong>${children}</strong>`;
+    case "italic": return `<em>${children}</em>`;
+    case "a": return `<a href="${node.url ?? ""}">${children}</a>`;
+    default: return children;
+  }
+}
+
+const bodyHtml = renderBody(body);
 ---
 
 <html lang="en">
@@ -33,9 +53,15 @@ const bodyHtml = content.trim()
     </style>
   </head>
   <body>
-    <h1>{heroText}</h1>
-    {image && <img src={image} alt="" />}
-    <div set:html={bodyHtml} />
+    <div data-tina-form={formPayload}>
+      <h1 data-tina-field="heroText">{heroText}</h1>
+      {image && <img data-tina-field="image" src={image} alt="" />}
+      <div data-tina-field="body" set:html={bodyHtml} />
+    </div>
     <p class="edit-hint">Edit this content in the <a href="/admin">TinaCMS editor →</a></p>
+    <script>
+      import { init } from "@tinacms/bridge";
+      init();
+    </script>
   </body>
 </html>
